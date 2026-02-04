@@ -190,7 +190,7 @@ def create_bloch_animation():
     plt.show()
 
 
-def create_probability_evolution():
+def create_probability_evolution(output_file=None):
     """
     Alternative visualization: Show probability evolution over iterations
     """
@@ -232,9 +232,13 @@ def create_probability_evolution():
     ax.set_xticks(iterations)
 
     plt.tight_layout()
-    plt.savefig('benchmarks/probability_evolution.png', dpi=300, bbox_inches='tight')
-    print("Probability evolution chart saved to: benchmarks/probability_evolution.png")
-    plt.show()
+    
+    if output_file:
+        plt.savefig(output_file, dpi=300, bbox_inches='tight')
+        print(f"Probability evolution chart saved to: {output_file}")
+        
+    return fig
+
 
 
 def main():
@@ -247,7 +251,7 @@ def main():
     print()
 
     # Create probability evolution (simpler and more informative)
-    create_probability_evolution()
+    create_probability_evolution(output_file='benchmarks/probability_evolution.png')
 
     print()
 

@@ -26,10 +26,14 @@ export MPLBACKEND=Agg
 print_header "Step 1: Running Grover's Algorithm Benchmark (Simulation)"
 python main.py
 
-print_header "Step 2: Generating Performance Visualizations (Ideal vs Noisy)"
-python visualize.py
+print_header "Step 2: Generating Consolidated PDF Report"
+python generate_report.py
 
-print_header "Step 3: Generating Bloch Sphere Animation & State Evolution"
+print_header "Step 3: Generating Bloch Sphere Animation (GIF)"
+# We still run this for the GIF, but it won't save the PNG anymore if we don't ask it to, 
+# relying on generate_report.py for the static chart.
+# However, bloch_animation.py execution currently generates the PNG by default IF run as main.
+# We should probably let it generate the gif only or just ignore the png it generates.
 python bloch_animation.py
 
 print_header "Full Benchmark Pipeline Complete!"

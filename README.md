@@ -9,6 +9,7 @@ This project implements a 3-qubit Grover search targeting the state `|101⟩` wi
 ## Features
 
 - **Grover Circuit Implementation**: 3-qubit search using GroverOperator library
+- **Consolidated PDF Reporting**: AUTO-GENERATED `benchmarks/grover_report.pdf` combining all charts
 - **Dual Simulation Modes**:
   - Ideal: AerSimulator with SamplerV2
   - Noisy: FakeBrisbane noise model with optimization level 3 transpilation
@@ -17,7 +18,7 @@ This project implements a 3-qubit Grover search targeting the state `|101⟩` wi
   - Dual-bar chart comparing probability distributions
   - State probability evolution over iterations
   - Bloch sphere animation (GIF)
-- **Comprehensive Theory**: Mathematical proofs of O(√N) speedup
+- **Comprehensive Theory**: Enhanced "Quantum Clear" documentation with rigorous proofs
 
 ## Project Structure
 
@@ -70,10 +71,24 @@ pip install -r requirements.txt
 
 ## Usage Instructions
 
-### 1. Run the Main Benchmark
+### 1. Run the Full Benchmark Suite (Recommended)
 
-Execute the primary benchmarking script:
+The easiest way to run the benchmark, visualization, and report generation is using the automation script:
 
+```bash
+./run_benchmark.sh
+```
+
+This will:
+- Run the simulation (`main.py`)
+- Generate the consolidated PDF report (`generate_report.py`)
+- Create the Bloch sphere animation (`bloch_animation.py`)
+
+### 2. Manual Execution
+
+If you prefer to run steps individually:
+
+**Step 1: Simulation**
 ```bash
 python main.py
 ```

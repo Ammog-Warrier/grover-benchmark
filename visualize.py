@@ -96,9 +96,13 @@ def create_dual_bar_chart(ideal_data, noisy_data, metrics, output_file='benchmar
     add_value_labels(bars2)
 
     plt.tight_layout()
-    plt.savefig(output_file, dpi=300, bbox_inches='tight')
-    print(f"Dual-bar chart saved to: {output_file}")
-    plt.show()
+    
+    if output_file:
+        plt.savefig(output_file, dpi=300, bbox_inches='tight')
+        print(f"Dual-bar chart saved to: {output_file}")
+        
+    return fig
+
 
 
 def main():
@@ -126,7 +130,8 @@ def main():
     ideal_data, noisy_data, metrics = load_benchmark_data(latest_csv)
 
     # Create visualization
-    create_dual_bar_chart(ideal_data, noisy_data, metrics)
+    create_dual_bar_chart(ideal_data, noisy_data, metrics, output_file='benchmarks/comparison_chart.png')
+    plt.show()
 
 
 if __name__ == "__main__":

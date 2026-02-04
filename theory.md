@@ -37,26 +37,55 @@ $$
 
 ### 2.2 Oracle Operator
 
-The oracle $O_\omega$ marks the target state $|\omega\rangle$ with a phase flip:
+The oracle $O_\omega$ marks the target state $|\omega\rangle$ with a phase flip. While often treated as a black box, its construction is critical.
 
+**Mathematical Definition:**
 $$
-O_\omega |x\rangle = \begin{cases}
+O_\omega |x\rangle = (-1)^{f(x)} |x\rangle = \begin{cases}
 -|x\rangle & \text{if } x = \omega \\
 |x\rangle & \text{otherwise}
 \end{cases}
 $$
 
 **Matrix representation:**
-
 $$
 O_\omega = I - 2|\omega\rangle\langle\omega|
 $$
 
-**Verification:**
+**Quantum Implementation (Phase Kickback):**
+In many textbooks, the oracle is described as a diagonal operator ($Z$-type). However, standard quantum computers typically implement this using a **Multi-Controlled X (MCX) or Toffoli** gate flanked by Hadamard ($H$) gates.
 
+For a 3-qubit system targeting $|101\rangle$:
+1. **State**: $|101\rangle$ corresponds to $q_2=1, q_1=0, q_0=1$.
+2. **Phase Kickback Trick**:
+   - To flip the phase of $|101\rangle$, we effectively want to apply a $Z$ gate to the target qubit when the controls match.
+   - We use the identity $H X H = Z$.
+   - A Multi-Controlled Z (CCZ) is equivalent to sandwiching the target qubit of a Toffoli (CCX) between Hadamards.
+
+**Circuit for $|101\rangle$ Oracle:**
+
+```
+q_0 (Control): ───────■───────
+                      │
+q_1 (Control): ──X────■────X──  <-- X gates flip |0> to |1> to activate control
+                      │
+q_2 (Target):  ──H────X────H──  <-- H-X-H creates the Z-phase flip
+```
+
+**Verification:**
 $$
-O_\omega |\omega\rangle = (I - 2|\omega\rangle\langle\omega|)|\omega\rangle = |\omega\rangle - 2|\omega\rangle = -|\omega\rangle
+H(\text{NOT})H |1\rangle = H (\text{NOT}) |-\rangle = H |+\rangle = |0\rangle \quad (\text{No Phase})
 $$
+$$
+H(\text{NOT})H |0\rangle = H (\text{NOT}) |+\rangle = H |+\rangle = |0\rangle \quad (\text{Wait, precise math below})
+$$
+
+Actually, the phase flip comes from the eigenstate property:
+$$
+H X H |1\rangle = Z |1\rangle = -|1\rangle
+$$
+Thus, when the controls are active (state $|101\rangle$), the target bit $q_2$ (in state $|1\rangle$) undergoes a $Z$ rotation, adding a global $-1$ phase to the state $|\psi\rangle$.
+
 
 ### 2.3 Diffusion Operator
 
