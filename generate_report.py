@@ -2,6 +2,7 @@
 """
 Report Generator for Grover's Benchmark
 Combines the latest results into a single clean PDF report.
+Reads static assets from public/results/ and outputs PDF to benchmarks/.
 """
 
 import matplotlib.pyplot as plt
@@ -34,7 +35,9 @@ def generate_pdf_report():
         ("topology_comparison.png", "Topology Comparison"),
         ("scalability.png", "Scalability Analysis"),
         ("bloch_sphere.png", "Bloch Sphere Visualization"),
-        ("noise_sensitivity_sweep.png", "Noise Sensitivity Analysis")
+        ("noise_sensitivity_sweep.png", "Noise Sensitivity Analysis"),
+        ("probability_evolution.png", "Probability Evolution"),
+        ("comparison_chart.png", "Ideal vs. Noisy Distribution")
     ]
 
     with PdfPages(report_file) as pdf:
@@ -50,6 +53,19 @@ def generate_pdf_report():
         ax_title.text(0.5, 0.5, "Consolidated Performance Metrics & Visualizations", 
                      ha='center', va='center', fontsize=16, style='italic')
         
+        # Read and add text content if available (e.g., best_topology.txt)
+        txt_path = results_dir / "best_topology.txt"
+        if txt_path.exists():
+            try:
+                with open(txt_path, 'r') as f:
+                    content = f.read()
+                ax_title.text(0.5, 0.3, "Best Topology Summary:\n" + content, 
+                             ha='center', va='center', fontsize=12, 
+                             bbox=dict(boxstyle="round,pad=0.5", fc="wheat", ec="black", alpha=0.5))
+                print("Added best_topology.txt content to Title Page")
+            except Exception as e:
+                print(f"Failed to read text file: {e}")
+
         pdf.savefig(fig_title)
         plt.close(fig_title)
 
@@ -59,12 +75,10 @@ def generate_pdf_report():
             if img_path.exists():
                 try:
                     # Create a figure for the image
-                    # We want to fit the image nicely
                     img = mpimg.imread(str(img_path))
                     
-                    # Determine aspect ratio
-                    h, w, _ = img.shape
-                    aspect = w / h
+                    # Determine aspects and page flow
+                    # Basic approach: One image per page
                     
                     # A4 (ish) page size in inches
                     page_w, page_h = 11.69, 8.27 # A4 Landscape

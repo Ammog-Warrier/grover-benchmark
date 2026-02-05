@@ -474,3 +474,11 @@ For questions or support, please open an issue on GitHub.
 ### 4. Noise Sensitivity
 *Impact of depolarizing error on search success probability.*
 ![Noise Sensitivity](public/results/noise_sensitivity_sweep.png)
+
+### 5. Ideal vs. Noisy Distribution
+*Comparison of probability distributions between ideal simulation and noisy hardware model.*
+![Comparison Chart](public/results/comparison_chart.png)
+
+### 6. Probability Evolution
+*Evolution of state probabilities over Grover iterations.*
+![Probability Evolution](public/results/probability_evolution.png)

@@ -155,17 +155,16 @@ def run_experiment_1_noise_sweep():
     plt.title('Experiment 1: Noise Sensitivity Sweep')
     plt.grid(True, which="both", ls="-")
     plt.legend()
-    plt.savefig('noise_sensitivity_sweep.png')
-    print("Saved plot: noise_sensitivity_sweep.png")
+    
+    output_path = 'public/results/noise_sensitivity_sweep.png'
+    plt.savefig(output_path)
+    print(f"Saved plot: {output_path}")
 
 def run_experiment_2_topology():
     print("\n" + "="*50)
     print("Experiment 2: Topology Comparison")
     print("="*50)
     
-    target = '1101' # 4-qubit target (implied by "4-qubit Grover circuit" and random choice or specific. "1011" or "1101")
-    # Let's use '1011' or similar. User: "Run the same 4-qubit Grover circuit".
-    # I'll pick '1101' arbitrarily or '1111'. '1011' is nice.
     target = '1011'
     qc = build_grover_circuit(target)
     
@@ -183,7 +182,7 @@ def run_experiment_2_topology():
     ideal_sampler = BackendSamplerV2(backend=ideal_backend)
     ideal_qc = transpile(qc, ideal_backend)
     ideal_job = ideal_sampler.run([ideal_qc], shots=shots)
-    ideal_counts = ideal_job.result()[0].data.c.get_counts() # assuming 'c'
+    ideal_counts = ideal_job.result()[0].data.c.get_counts()
     
     best_backend = None
     best_fidelity = -1.0
@@ -191,19 +190,13 @@ def run_experiment_2_topology():
     for name, backend in backends.items():
         print(f"Running on {name}...")
         
-        # Transpile for specific backend to handle coupling map
         transpiled_qc = transpile(qc, backend, optimization_level=3)
-        
-        # Run using BackendSamplerV2 with the fake backend
-        # Using AerSimulator.from_backend to simulate it is robust
         sim_backend = AerSimulator.from_backend(backend)
         sampler = BackendSamplerV2(backend=sim_backend)
         
         job = sampler.run([transpiled_qc], shots=shots)
         result = job.result()
         
-        # Get counts
-        # Register name might vary? usually 'c' if original only had one
         c_reg_name = list(result[0].data.keys())[0]
         noisy_counts = result[0].data[c_reg_name].get_counts()
         
@@ -215,27 +208,28 @@ def run_experiment_2_topology():
             best_fidelity = fid
             best_backend = name
             
-    # Save Best Topology
-    with open('best_topology.txt', 'w') as f:
+    # Save Best Topology to public/results folder
+    with open('public/results/best_topology.txt', 'w') as f:
         f.write(f"Best Performing Topology: {best_backend}\n")
         f.write(f"Fidelity: {best_fidelity:.6f}\n")
         f.write(f"Circuit Target: {target}\n")
-    print(f"Saved best topology to best_topology.txt")
+    print(f"Saved best topology to public/results/best_topology.txt")
     
     # Plotting
     plt.figure(figsize=(10, 6))
     names = list(fidelities.keys())
     vals = list(fidelities.values())
     
-    plt.bar(names, vals, color=['#4285F4', '#DB4437', '#F4B400']) # Google colors for fun
+    plt.bar(names, vals, color=['#4285F4', '#DB4437', '#F4B400'])
     plt.ylabel('Hellinger Fidelity')
     plt.title(f'Topology Comparison (4-Qubit Grover, Target={target})')
     plt.ylim(0, 1.0)
     for i, v in enumerate(vals):
         plt.text(i, v + 0.01, f"{v:.3f}", ha='center')
         
-    plt.savefig('topology_comparison.png')
-    print("Saved plot: topology_comparison.png")
+    output_path = 'public/results/topology_comparison.png'
+    plt.savefig(output_path)
+    print(f"Saved plot: {output_path}")
     
 if __name__ == "__main__":
     run_experiment_1_noise_sweep()

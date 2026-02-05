@@ -130,8 +130,10 @@ def main():
     ideal_data, noisy_data, metrics = load_benchmark_data(latest_csv)
 
     # Create visualization
-    create_dual_bar_chart(ideal_data, noisy_data, metrics, output_file='benchmarks/comparison_chart.png')
-    plt.show()
+    # Create visualization
+    Path("public/results").mkdir(exist_ok=True)
+    create_dual_bar_chart(ideal_data, noisy_data, metrics, output_file='public/results/comparison_chart.png')
+    # plt.show() # Commented for automation
 
 
 if __name__ == "__main__":

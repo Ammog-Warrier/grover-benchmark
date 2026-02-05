@@ -26,7 +26,7 @@ def load_scalability_data(csv_file):
     return data
 
 
-def plot_scalability_analysis(data, output_file='benchmarks/scalability_chart.png'):
+def plot_scalability_analysis(data, output_file='public/results/scalability.png'):
     """Create dual-axis scalability plot"""
     n_qubits = [d['n_qubits'] for d in data]
     depths = [d['transpiled_depth'] for d in data]

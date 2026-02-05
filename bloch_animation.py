@@ -10,6 +10,7 @@ from qiskit import QuantumCircuit
 from qiskit.quantum_info import Statevector
 from qiskit.visualization import plot_bloch_vector
 from mpl_toolkits.mplot3d import Axes3D
+from pathlib import Path
 
 
 def create_oracle_for_101():
@@ -51,42 +52,25 @@ def get_grover_iteration_states():
     return states
 
 
-def statevector_to_bloch(statevector, qubit_index=0):
+
+def statevector_to_bloch(statevector, qubit_index):
     """
     Convert a multi-qubit statevector to Bloch sphere coordinates
-    for a specific qubit (partial trace)
-
-    For simplicity, we'll use the reduced density matrix approach
+    using reduced density matrix expectation values.
     """
-    # Get density matrix
-    rho = statevector.to_operator()
+    from qiskit.quantum_info import partial_trace
 
-    # For a single qubit, we can compute expectation values
-    # This is a simplified visualization - we'll show the most probable state
-    probs = statevector.probabilities()
-    most_probable_state = np.argmax(probs)
-
-    # Convert to binary representation
-    binary = format(most_probable_state, f'0{statevector.num_qubits}b')
-
-    # Get the bit for the specific qubit
-    bit = int(binary[qubit_index])
-
-    # Simple mapping to Bloch sphere
-    # |0⟩ -> (0, 0, 1), |1⟩ -> (0, 0, -1)
-    # Add some phase information from amplitudes
-    amplitude = statevector.data[most_probable_state]
-    phase = np.angle(amplitude)
-
-    # Create Bloch vector
-    if bit == 0:
-        x = 0.3 * np.cos(phase)
-        y = 0.3 * np.sin(phase)
-        z = 0.9
-    else:
-        x = 0.3 * np.cos(phase)
-        y = 0.3 * np.sin(phase)
-        z = -0.9
+    # Get reduced density matrix for the specific qubit
+    # We trace out all qubits except the target one
+    num_qubits = statevector.num_qubits
+    qubits_to_trace = [i for i in range(num_qubits) if i != qubit_index]
+    rho = partial_trace(statevector, qubits_to_trace)
+    
+    # Calculate expectation values <X>, <Y>, <Z>
+    # trace(rho * sigma)
+    x = np.real(np.trace(rho.data @ np.array([[0, 1], [1, 0]])))
+    y = np.real(np.trace(rho.data @ np.array([[0, -1j], [1j, 0]])))
+    z = np.real(np.trace(rho.data @ np.array([[1, 0], [0, -1]])))
 
     return [x, y, z]
 
@@ -97,11 +81,12 @@ def create_bloch_animation():
     """
     print("Generating Bloch sphere animation...")
 
+    # Ensure output directory exists
+    Path("benchmarks").mkdir(exist_ok=True)
+    Path("public/results").mkdir(exist_ok=True)
+
     # Get statevectors at each iteration
     states = get_grover_iteration_states()
-
-    # For visualization, we'll track the probability of finding |101⟩
-    # and show it as a 3D trajectory
 
     fig = plt.figure(figsize=(14, 5))
 
@@ -113,26 +98,33 @@ def create_bloch_animation():
 
     # Setup each Bloch sphere
     for i, ax in enumerate(axes):
+        ax.set_box_aspect([1, 1, 1])
         ax.set_xlim([-1, 1])
         ax.set_ylim([-1, 1])
         ax.set_zlim([-1, 1])
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
+        # Hide standard axes
+        ax.set_axis_off()
         ax.set_title(f'Qubit {i}')
 
-        # Draw sphere
-        u = np.linspace(0, 2 * np.pi, 50)
-        v = np.linspace(0, np.pi, 50)
+        # Draw sphere wireframe
+        u = np.linspace(0, 2 * np.pi, 30)
+        v = np.linspace(0, np.pi, 20)
         x = np.outer(np.cos(u), np.sin(v))
         y = np.outer(np.sin(u), np.sin(v))
         z = np.outer(np.ones(np.size(u)), np.cos(v))
-        ax.plot_surface(x, y, z, alpha=0.1, color='cyan')
+        ax.plot_wireframe(x, y, z, color='lightgray', alpha=0.3)
+        ax.plot_surface(x, y, z, alpha=0.05, color='cyan')
 
-        # Draw axes
-        ax.plot([-1, 1], [0, 0], [0, 0], 'k-', alpha=0.3)
-        ax.plot([0, 0], [-1, 1], [0, 0], 'k-', alpha=0.3)
-        ax.plot([0, 0], [0, 0], [-1, 1], 'k-', alpha=0.3)
+        # Draw coordinate axes
+        ax.plot([-1.1, 1.1], [0, 0], [0, 0], 'k-', alpha=0.3, lw=1)
+        ax.plot([0, 0], [-1.1, 1.1], [0, 0], 'k-', alpha=0.3, lw=1)
+        ax.plot([0, 0], [0, 0], [-1.1, 1.1], 'k-', alpha=0.3, lw=1)
+        
+        # Labels
+        ax.text(1.2, 0, 0, "x")
+        ax.text(0, 1.2, 0, "y")
+        ax.text(0, 0, 1.2, "|0>")
+        ax.text(0, 0, -1.3, "|1>")
 
     # Trajectory storage
     trajectories = [[], [], []]
@@ -141,7 +133,7 @@ def create_bloch_animation():
 
     for ax in axes:
         line, = ax.plot([], [], [], 'r-', linewidth=2, label='Trajectory')
-        point, = ax.plot([], [], [], 'ro', markersize=10)
+        point, = ax.plot([], [], [], 'ro', markersize=8)
         lines.append(line)
         points.append(point)
 
@@ -154,45 +146,60 @@ def create_bloch_animation():
         return lines + points
 
     def animate(frame):
-        state_idx = min(frame // 10, len(states) - 1)
-        statevector = states[state_idx]
-
+        # Interpolation steps for smoother animation
+        steps_per_state = 10
+        state_idx = min(frame // steps_per_state, len(states) - 2)
+        progress = (frame % steps_per_state) / steps_per_state
+        
+        # Linear interpolation between states (rough approx for visualization)
+        # Ideally we simulate theunitary evolution, but this is sufficient for visualization
+        sv1 = states[state_idx]
+        sv2 = states[state_idx + 1] if state_idx + 1 < len(states) else states[state_idx]
+        
         for qubit_idx in range(3):
-            bloch_vec = statevector_to_bloch(statevector, qubit_idx)
-
-            trajectories[qubit_idx].append(bloch_vec)
-
-            # Update trajectory line
+            v1 = np.array(statevector_to_bloch(sv1, qubit_idx))
+            v2 = np.array(statevector_to_bloch(sv2, qubit_idx))
+            
+            # Interpolate vector
+            curr_v = v1 + (v2 - v1) * progress
+            
+            trajectories[qubit_idx].append(curr_v)
+            
+            # Keep trajectory limited to last 50 points to avoid clutter
             traj = np.array(trajectories[qubit_idx])
+            
             if len(traj) > 0:
                 lines[qubit_idx].set_data(traj[:, 0], traj[:, 1])
                 lines[qubit_idx].set_3d_properties(traj[:, 2])
 
-                # Update current point
-                points[qubit_idx].set_data([bloch_vec[0]], [bloch_vec[1]])
-                points[qubit_idx].set_3d_properties([bloch_vec[2]])
+                points[qubit_idx].set_data([curr_v[0]], [curr_v[1]])
+                points[qubit_idx].set_3d_properties([curr_v[2]])
 
         return lines + points
 
     # Create animation
-    frames = len(states) * 10
+    # frames = (len(states) - 1) * 10
+    total_frames = (len(states)-1) * 10 
     anim = FuncAnimation(fig, animate, init_func=init,
-                        frames=frames, interval=100, blit=True)
+                        frames=total_frames + 5, interval=100, blit=False)
 
-    # Save animation
-    output_file = 'benchmarks/bloch_sphere_animation.gif'
-    writer = PillowWriter(fps=10)
-    anim.save(output_file, writer=writer)
+    # Save animation to benchmarks folder (as requested)
+    anim_output_file = 'benchmarks/bloch_sphere_animation.gif'
+    try:
+        writer = PillowWriter(fps=15)
+        anim.save(anim_output_file, writer=writer)
+        print(f"Bloch sphere animation saved to: {anim_output_file}")
+    except Exception as e:
+        print(f"Warning: Could not save GIF (missing ffmpeg/pillow?): {e}")
 
-    print(f"Bloch sphere animation saved to: {output_file}")
-
-    # Save static image of the final state
-    static_output_file = 'benchmarks/bloch_sphere_final.png'
+    # Save static image of the final state to public/results for report
+    # We force the plot to show the final state
+    animate(total_frames)
+    static_output_file = 'public/results/bloch_sphere.png'
     plt.savefig(static_output_file, dpi=300, bbox_inches='tight')
     print(f"Static Bloch sphere image saved to: {static_output_file}")
 
-    plt.tight_layout()
-    # plt.show() # Commented out to avoid blocking execution during automation
+    plt.close(fig)
 
 
 def create_probability_evolution(output_file=None):
@@ -256,7 +263,7 @@ def main():
     print()
 
     # Create probability evolution (simpler and more informative)
-    create_probability_evolution(output_file='benchmarks/probability_evolution.png')
+    create_probability_evolution(output_file='public/results/probability_evolution.png')
 
     print()
 
