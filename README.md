@@ -455,7 +455,6 @@ Contributions welcome! Please submit pull requests or open issues for:
 
 For questions or support, please open an issue on GitHub.
 
-**Happy Quantum Computing! 🚀**
 
 ## Benchmark Results
 
