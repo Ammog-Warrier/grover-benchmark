@@ -20,25 +20,42 @@ from qiskit_ibm_runtime.fake_provider import FakeBrisbane
 placeholder_token = "YOUR_IBM_TOKEN_HERE"
 
 
-def create_oracle_for_101():
+def get_grover_oracle(target_bitstring):
     """
-    Create oracle that marks the state |101⟩
-    Uses phase kickback with ancilla qubit
+    Create oracle for any target bitstring
+    Args:
+        target_bitstring: String like '101' or '1011'
+    Returns:
+        QuantumCircuit oracle
     """
-    oracle = QuantumCircuit(3, name='Oracle')
+    n = len(target_bitstring)
+    oracle = QuantumCircuit(n, name='Oracle')
 
-    # We want to mark |101⟩, so flip qubit 1 (which is 0)
-    oracle.x(1)
+    # Flip qubits where target bit is '0'
+    for i, bit in enumerate(target_bitstring):
+        if bit == '0':
+            oracle.x(i)
 
-    # Multi-controlled Z gate (marks the target state)
-    oracle.h(2)
-    oracle.ccx(0, 1, 2)
-    oracle.h(2)
+    # Multi-controlled Z (using H-CCX-H pattern)
+    oracle.h(n-1)
+    if n == 3:
+        oracle.ccx(0, 1, 2)
+    else:
+        # Multi-controlled X on last qubit
+        oracle.mcx(list(range(n-1)), n-1)
+    oracle.h(n-1)
 
-    # Uncompute the X gate
-    oracle.x(1)
+    # Uncompute X gates
+    for i, bit in enumerate(target_bitstring):
+        if bit == '0':
+            oracle.x(i)
 
     return oracle
+
+
+def create_oracle_for_101():
+    """Legacy wrapper for backward compatibility"""
+    return get_grover_oracle('101')
 
 
 def create_grover_circuit():
