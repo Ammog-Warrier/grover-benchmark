@@ -456,3 +456,21 @@ Contributions welcome! Please submit pull requests or open issues for:
 For questions or support, please open an issue on GitHub.
 
 **Happy Quantum Computing! 🚀**
+
+## Benchmark Results
+
+### 1. Topology Comparison
+*Comparing execution fidelity across different backend architectures.*
+![Topology Comparison](public/results/topology_comparison.png)
+
+### 2. Scalability Analysis
+*Tracing circuit depth and success probability as qubit count increases.*
+![Scalability Chart](public/results/scalability.png)
+
+### 3. Bloch Sphere Visualization
+*State evolution during the Grover search process.*
+![Bloch Sphere](public/results/bloch_sphere.png)
+
+### 4. Noise Sensitivity
+*Impact of depolarizing error on search success probability.*
+![Noise Sensitivity](public/results/noise_sensitivity_sweep.png)

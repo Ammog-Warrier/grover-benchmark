@@ -1,65 +1,89 @@
+
 """
 Report Generator for Grover's Benchmark
-Combines visualizations into a single PDF report
+Combines the latest results into a single clean PDF report.
 """
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+import matplotlib.image as mpimg
 from pathlib import Path
-import sys
 from datetime import datetime
-
-import visualize
-import bloch_animation
+import sys
 
 def generate_pdf_report():
     # Setup paths
+    results_dir = Path('public/results')
     benchmark_dir = Path('benchmarks')
-    if not benchmark_dir.exists():
-        print("Error: benchmarks directory not found.")
+    
+    # Create benchmarks dir if it doesn't exist (it holds the PDF)
+    benchmark_dir.mkdir(exist_ok=True)
+    
+    if not results_dir.exists():
+        print("Error: public/results directory not found.")
         sys.exit(1)
 
-    # Find latest CSV
-    csv_files = list(benchmark_dir.glob('grover_benchmark_*.csv'))
-    if not csv_files:
-        print("Error: No benchmark CSV files found.")
-        sys.exit(1)
-    
-    latest_csv = max(csv_files, key=lambda p: p.stat().st_mtime)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     report_file = benchmark_dir / f"grover_report_{timestamp}.pdf"
 
-    print(f"Generating PDF report from: {latest_csv.name}")
+    print(f"Generating PDF report to: {report_file}")
 
-    # Load data
-    ideal_data, noisy_data, metrics = visualize.load_benchmark_data(latest_csv)
+    # List of images to include with titles
+    # Using the filenames we established
+    images_to_include = [
+        ("topology_comparison.png", "Topology Comparison"),
+        ("scalability.png", "Scalability Analysis"),
+        ("bloch_sphere.png", "Bloch Sphere Visualization"),
+        ("noise_sensitivity_sweep.png", "Noise Sensitivity Analysis")
+    ]
 
-    # Create PDF
     with PdfPages(report_file) as pdf:
-        # Page 1: Dual Bar Chart
-        fig1 = visualize.create_dual_bar_chart(ideal_data, noisy_data, metrics, output_file=None)
-        pdf.savefig(fig1)
-        plt.close(fig1)
-        print("Added Comparison Chart to PDF")
+        # Title Page
+        fig_title = plt.figure(figsize=(11, 8.5)) # Landscapeish or Portrait
+        ax_title = fig_title.add_subplot(111)
+        ax_title.axis('off')
+        
+        ax_title.text(0.5, 0.7, "Grover's Algorithm Benchmarking Report", 
+                     ha='center', va='center', fontsize=24, fontweight='bold')
+        ax_title.text(0.5, 0.6, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 
+                     ha='center', va='center', fontsize=14)
+        ax_title.text(0.5, 0.5, "Consolidated Performance Metrics & Visualizations", 
+                     ha='center', va='center', fontsize=16, style='italic')
+        
+        pdf.savefig(fig_title)
+        plt.close(fig_title)
 
-        # Page 2: Probability Evolution
-        # Note: bloch_animation.create_probability_evolution rebuilds the circuit simulations internally
-        # independent of the specific CSV run, which is acceptable for this level of demo.
-        # Ideally, we would pass the data from CSV if we wanted perfect sync, but the evolution 
-        # is theoretical/simulated anyway.
-        fig2 = bloch_animation.create_probability_evolution(output_file=None)
-        pdf.savefig(fig2)
-        plt.close(fig2)
-        print("Added Probability Evolution to PDF")
-
-        # Metadata Page (Optional text page)
-        fig_text = plt.figure(figsize=(8.5, 11))
-        fig_text.text(0.1, 0.9, "Grover's Benchmark Report", fontsize=24, fontweight='bold')
-        fig_text.text(0.1, 0.85, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", fontsize=12)
-        fig_text.text(0.1, 0.80, f"Source Data: {latest_csv.name}", fontsize=12)
-        fig_text.text(0.1, 0.75, f"Hellinger Fidelity: {metrics.get('fidelity', 'N/A')}", fontsize=14)
-        pdf.savefig(fig_text)
-        plt.close(fig_text)
+        # Add each image
+        for filename, title in images_to_include:
+            img_path = results_dir / filename
+            if img_path.exists():
+                try:
+                    # Create a figure for the image
+                    # We want to fit the image nicely
+                    img = mpimg.imread(str(img_path))
+                    
+                    # Determine aspect ratio
+                    h, w, _ = img.shape
+                    aspect = w / h
+                    
+                    # A4 (ish) page size in inches
+                    page_w, page_h = 11.69, 8.27 # A4 Landscape
+                    
+                    fig = plt.figure(figsize=(page_w, page_h))
+                    ax = fig.add_subplot(111)
+                    
+                    ax.imshow(img)
+                    ax.axis('off')
+                    ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
+                    
+                    plt.tight_layout()
+                    pdf.savefig(fig)
+                    plt.close(fig)
+                    print(f"Added {filename} to PDF")
+                except Exception as e:
+                    print(f"Failed to process {filename}: {e}")
+            else:
+                print(f"Warning: Image {filename} not found in {results_dir}")
 
     print(f"\nReport successfully saved to: {report_file}")
 

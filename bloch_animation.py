@@ -186,8 +186,13 @@ def create_bloch_animation():
 
     print(f"Bloch sphere animation saved to: {output_file}")
 
+    # Save static image of the final state
+    static_output_file = 'benchmarks/bloch_sphere_final.png'
+    plt.savefig(static_output_file, dpi=300, bbox_inches='tight')
+    print(f"Static Bloch sphere image saved to: {static_output_file}")
+
     plt.tight_layout()
-    plt.show()
+    # plt.show() # Commented out to avoid blocking execution during automation
 
 
 def create_probability_evolution(output_file=None):

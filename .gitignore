@@ -27,8 +27,4 @@ pip-delete-this-directory.txt
 Thumbs.db
 
 # Project Specific
-# Ignore timestamped benchmark data logs to keep the repo clean
-benchmarks/*.csv
-# Keep the visualizations for the README
-!benchmarks/*.png
-!benchmarks/*.gif
+benchmarks/
