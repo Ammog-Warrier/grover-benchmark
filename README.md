@@ -1,6 +1,6 @@
 # Grover's Algorithm Benchmarking Suite
 
-A comprehensive quantum computing benchmarking toolkit for Grover's Algorithm using Qiskit 1.x.(Compatble using 2.X as well)
+A comprehensive quantum computing benchmarking toolkit for Grover's Algorithm using Qiskit 1.x.(Compatible using 2.X as well)
 
 ## Overview
 
