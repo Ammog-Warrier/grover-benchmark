@@ -418,9 +418,9 @@ If you use this benchmarking suite in your research, please cite:
 ```bibtex
 @software{grover_benchmark_2026,
   title={Grover's Algorithm Benchmarking Suite},
-  author={Quantum Computing Researcher},
+  author={AMMOG Warrier},
   year={2026},
-  url={https://github.com/yourusername/grover-benchmark}
+  url={https://github.com/Ammog-Warrier/grover-benchmark}
 }
 ```
 
