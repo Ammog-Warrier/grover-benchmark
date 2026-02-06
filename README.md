@@ -14,6 +14,10 @@ This project implements a 3-qubit Grover search targeting the state `|101⟩` wi
   - Ideal: AerSimulator with SamplerV2
   - Noisy: FakeBrisbane noise model with optimization level 3 transpilation
 - **Hellinger Fidelity Analysis**: Quantitative comparison of ideal vs. noisy distributions
+- **Scalability Analysis**: Depth vs. Width study for 3 to 6 qubits identifying hardware limits
+- **Hardware Stress Testing**:
+  - Noise Sensitivity Sweep determining quantum advantage threshold
+  - Topology Comparison benchmarking different backend architectures
 - **Rich Visualizations**:
   - Dual-bar chart comparing probability distributions
   - State probability evolution over iterations
@@ -24,16 +28,27 @@ This project implements a 3-qubit Grover search targeting the state `|101⟩` wi
 
 ```
 grover-benchmark/
-├── main.py                    # Main execution script
-├── visualize.py               # Dual-bar chart generator
-├── bloch_animation.py         # Bloch sphere animation & probability evolution
-├── theory.md                  # Mathematical proofs and theory
-├── requirements.txt           # Python dependencies
-├── benchmarks/                # Output directory for results
-│   ├── grover_benchmark_*.csv
+├── main.py                    # Main simulation script (CSV generator)
+├── hardware_stress_test.py    # Noise & topology analysis script
+├── scalability_study.py       # Scalability analysis script
+├── visualize.py               # Plotting utilities
+├── visualize_scalability.py   # Scalability plotting utilities
+├── bloch_animation.py         # Animation generator
+├── generate_report.py         # PDF report assembler
+├── requirements.txt           # Project dependencies
+├── theory.md                  # Comprehensive theory documentation
+├── benchmarks/                # DATA OUTPUTS (Generated)
+│   ├── grover_report_*.pdf    # Consolidated PDF Reports
+│   ├── grover_benchmark_*.csv # Raw simulation data
+│   └── bloch_sphere_animation.gif # Animated state evolution
+├── public/results/            # STATIC ASSETS (For Reports/README)
+│   ├── best_topology.txt
+│   ├── bloch_sphere.png
 │   ├── comparison_chart.png
+│   ├── noise_sensitivity_sweep.png
 │   ├── probability_evolution.png
-│   └── bloch_sphere_animation.gif
+│   ├── scalability.png
+│   └── topology_comparison.png
 └── README.md                  # This file
 ```
 
@@ -84,78 +99,53 @@ This will:
 - Generate the consolidated PDF report (`generate_report.py`)
 - Create the Bloch sphere animation (`bloch_animation.py`)
 
-### 2. Manual Execution
+### 2. Manual Execution & Analysis Modules
 
-If you prefer to run steps individually:
+This suite is modular. You can run individual components for specific analyses:
 
-**Step 1: Simulation**
+#### A. Core Simulation (Standard Benchmark)
 ```bash
 python main.py
 ```
+- **Function**: Runs the standard 3-qubit Grover search on ideal and noisy backends.
+- **Output**: Generates raw CSV data in `benchmarks/`.
 
-**What it does:**
-- Creates a 3-qubit Grover circuit targeting `|101⟩`
-- Runs ideal simulation (AerSimulator)
-- Runs noisy simulation (FakeBrisbane noise model)
-- Calculates Hellinger fidelity between distributions
-- Saves results to `benchmarks/grover_benchmark_TIMESTAMP.csv`
-
-**Expected Output:**
-
-```
-============================================================
-GROVER'S ALGORITHM BENCHMARKING SUITE
-Target State: |101⟩
-============================================================
-
-Creating Grover circuit...
-Circuit depth: XX
-Circuit operations: {...}
-
-Running IDEAL simulation...
-Ideal results: {'101': 7735, '000': 45, '001': 42, ...}
-
-Running NOISY simulation with FakeBrisbane noise model...
-Circuit depth after transpilation: XX
-Noisy results: {'101': 6891, '000': 123, '001': 98, ...}
-
-============================================================
-ANALYSIS RESULTS
-============================================================
-Hellinger Fidelity: 0.XXXXXX
-Success Probability (Ideal): 94.45%
-Success Probability (Noisy): 84.12%
-
-Results saved to: benchmarks/grover_benchmark_YYYYMMDD_HHMMSS.csv
-
-Benchmarking complete!
-```
-
----
-
-### 2. Generate Visualizations
-
-#### Dual-Bar Chart (Ideal vs. Noisy)
-
+#### B. Visualization Suite
 ```bash
 python visualize.py
-```
-
-**Output:**
-- Generates `benchmarks/comparison_chart.png`
-- Displays side-by-side bar chart comparing probability distributions
-- Highlights target state `|101⟩` in green
-- Includes Hellinger fidelity annotation
-
-#### Probability Evolution & Bloch Sphere Animation
-
-```bash
 python bloch_animation.py
 ```
+- **Function**: Generates the comparison chart and animations based on the latest CSV.
+- **Output**: 
+  - `public/results/comparison_chart.png`
+  - `public/results/probability_evolution.png`
+  - `benchmarks/bloch_sphere_animation.gif`
 
-**Output:**
-- `benchmarks/probability_evolution.png`: Shows how state probabilities change over Grover iterations
-- `benchmarks/bloch_sphere_animation.gif`: Animated Bloch sphere visualization (may take 30-60 seconds to generate)
+#### C. Hardware Stress Test (New)
+```bash
+python hardware_stress_test.py
+```
+- **Function**: Performs advanced robustness checks.
+  1. **Noise Sensitivity**: Sweeps error rates (0.0001 - 0.1) to find the breakdown point.
+  2. **Topology Comparison**: Transpiles and runs the circuit on `FakeBrisbane`, `FakeKyoto`, and `FakeSherbrooke` to measure fidelity impact.
+- **Output**: 
+  - `public/results/noise_sensitivity_sweep.png`
+  - `public/results/topology_comparison.png`
+  - `public/results/best_topology.txt`
+
+#### D. Scalability Study (New)
+```bash
+python scalability_study.py
+python visualize_scalability.py
+```
+- **Function**: Analyzes algorithm performance on 3, 4, 5, and 6-qubit systems.
+  - Tracks exponential increase in circuit depth (due to MCX decomposition).
+  - Measures decay in success probability.
+- **Output**: 
+  - `benchmarks/scalability_study_*.csv`
+  - `public/results/scalability.png`
+
+---
 
 ---
 
@@ -214,6 +204,10 @@ $$F_H(P, Q) = \left(\sum_x \sqrt{p_x q_x}\right)^2$$
 
 - **Ideal**: ~94.5% (theoretical maximum for 2 iterations on 8 states)
 - **Noisy**: ~85-90% (depends on noise characteristics)
+
+### Scalability & Robustness Metrics
+- **Quantum Advantage Threshold**: The error rate at which Grover's algorithm performs worse than classical random guessing (typically ~5-6% gate error for 3 qubits).
+- **Depth Explosion**: The exponential growth of circuit depth required to decompose multi-controlled gates, which limits the feasible width of the algorithm on NISQ hardware.
 
 ---
 
@@ -376,6 +370,8 @@ pm = generate_preset_pass_manager(
 | Script | Execution Time |
 |--------|----------------|
 | main.py | ~10-15 seconds |
+| hardware_stress_test.py | ~45-60 seconds |
+| scalability_study.py | ~2-3 minutes |
 | visualize.py | ~2-3 seconds |
 | bloch_animation.py | ~30-60 seconds |
 
