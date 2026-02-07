@@ -11,9 +11,7 @@ import sys
 
 
 def load_benchmark_data(csv_file):
-    """
-    Load benchmark data from CSV file
-    """
+    """Load benchmark data from CSV file"""
     ideal_data = {}
     noisy_data = {}
     metrics = {}
@@ -22,7 +20,6 @@ def load_benchmark_data(csv_file):
         reader = csv.reader(f)
         lines = list(reader)
 
-        # Find where data ends and metrics begin
         data_section = True
         for i, row in enumerate(lines[1:], 1):  # Skip header
             if len(row) == 0:
@@ -41,9 +38,7 @@ def load_benchmark_data(csv_file):
 
 
 def create_dual_bar_chart(ideal_data, noisy_data, metrics, output_file='benchmarks/comparison_chart.png'):
-    """
-    Create dual-bar chart comparing ideal vs noisy distributions
-    """
+    """Create dual-bar chart comparing ideal vs noisy distributions"""
     states = sorted(ideal_data.keys())
     ideal_probs = [ideal_data[state] for state in states]
     noisy_probs = [noisy_data[state] for state in states]
@@ -53,7 +48,6 @@ def create_dual_bar_chart(ideal_data, noisy_data, metrics, output_file='benchmar
 
     fig, ax = plt.subplots(figsize=(12, 6))
 
-    # Create bars
     bars1 = ax.bar(x - width/2, ideal_probs, width, label='Ideal',
                    color='#2E86AB', alpha=0.8, edgecolor='black')
     bars2 = ax.bar(x + width/2, noisy_probs, width, label='Noisy (FakeBrisbane)',
@@ -66,7 +60,6 @@ def create_dual_bar_chart(ideal_data, noisy_data, metrics, output_file='benchmar
     ax.bar(target_idx + width/2, noisy_probs[target_idx], width,
            color='#06D6A0', alpha=0.9, edgecolor='black', linewidth=2)
 
-    # Customize chart
     ax.set_xlabel('Quantum State', fontsize=12, fontweight='bold')
     ax.set_ylabel('Probability', fontsize=12, fontweight='bold')
     ax.set_title("Grover's Algorithm: Ideal vs Noisy Simulation\nTarget State: |101⟩",
@@ -76,18 +69,16 @@ def create_dual_bar_chart(ideal_data, noisy_data, metrics, output_file='benchmar
     ax.legend(fontsize=10)
     ax.grid(axis='y', alpha=0.3, linestyle='--')
 
-    # Add fidelity annotation
     if 'fidelity' in metrics:
         ax.text(0.02, 0.98, f"Hellinger Fidelity: {metrics['fidelity']:.4f}",
                 transform=ax.transAxes, fontsize=11,
                 verticalalignment='top',
                 bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
 
-    # Add value labels on bars
     def add_value_labels(bars):
         for bar in bars:
             height = bar.get_height()
-            if height > 0.01:  # Only show labels for visible bars
+            if height > 0.01:
                 ax.text(bar.get_x() + bar.get_width()/2., height,
                        f'{height:.3f}',
                        ha='center', va='bottom', fontsize=8)
@@ -104,12 +95,8 @@ def create_dual_bar_chart(ideal_data, noisy_data, metrics, output_file='benchmar
     return fig
 
 
-
 def main():
-    """
-    Main visualization function
-    """
-    # Get the most recent benchmark CSV
+    """Main visualization function"""
     benchmark_dir = Path('benchmarks')
 
     if not benchmark_dir.exists():
@@ -122,18 +109,13 @@ def main():
         print("Error: No benchmark CSV files found. Run main.py first.")
         sys.exit(1)
 
-    # Use the most recent file
     latest_csv = max(csv_files, key=lambda p: p.stat().st_mtime)
     print(f"Loading data from: {latest_csv}")
 
-    # Load data
     ideal_data, noisy_data, metrics = load_benchmark_data(latest_csv)
-
-    # Create visualization
-    # Create visualization
+    
     Path("public/results").mkdir(exist_ok=True)
     create_dual_bar_chart(ideal_data, noisy_data, metrics, output_file='public/results/comparison_chart.png')
-    # plt.show() # Commented for automation
 
 
 if __name__ == "__main__":

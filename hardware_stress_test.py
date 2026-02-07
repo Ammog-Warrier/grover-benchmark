@@ -13,11 +13,9 @@ from qiskit.primitives import BackendSamplerV2
 from qiskit_ibm_runtime.fake_provider import FakeBrisbane, FakeKyoto, FakeSherbrooke
 
 # Import from local main.py
-# Assuming main.py is in the same directory or python path
 try:
     from main import get_grover_oracle, calculate_hellinger_fidelity
 except ImportError:
-    # Fallback if imports fail (e.g. running from different dir), though we are in project root
     print("Could not import from main.py, defining functions locally.")
     
     def get_grover_oracle(target_bitstring):
@@ -46,34 +44,23 @@ except ImportError:
 
 
 def build_grover_circuit(target_bitstring):
-    """
-    Builds a Grover circuit for N qubits targeting the specific bitstring.
-    """
+    """Builds a Grover circuit for N qubits targeting the specific bitstring."""
     n = len(target_bitstring)
-    qc = QuantumCircuit(n, n) # n qubits, n classical bits
+    qc = QuantumCircuit(n, n) 
     
-    # Initialization
     qc.h(range(n))
     qc.barrier()
     
-    # Oracle
     oracle = get_grover_oracle(target_bitstring)
-    
-    # Grover Operator
     grover_op = grover_operator(oracle)
     
-    # Optimal iterations: round(pi/4 * sqrt(2^n))
-    # N=3 -> ~2
-    # N=4 -> ~3
     optimal_iterations = int(np.round(np.pi / 4 * np.sqrt(2**n)))
     
     for _ in range(optimal_iterations):
         qc.compose(grover_op, inplace=True)
         qc.barrier()
         
-    # Measure
     qc.measure(range(n), range(n))
-    
     return qc
 
 def run_experiment_1_noise_sweep():
@@ -92,55 +79,28 @@ def run_experiment_1_noise_sweep():
     print(f"Sweeping depolarizing error from {error_rates[0]:.4f} to {error_rates[-1]:.4f} across {len(error_rates)} points.")
     
     for error_rate in error_rates:
-        # Create Noise Model
         noise_model = NoiseModel()
-        # Depolarizing error on 1-qubit gates ('u') and 2-qubit gates ('cx')
-        # Note: 'u' covers u1, u2, u3. using 'u' is standard for base gate noise in some contexts, 
-        # but often we specify ['u1', 'u2', 'u3', 'sx', 'rz']. 
-        # The user asked for "apply to all cx and u gates".
-        # We will add to 'u1', 'u2', 'u3' and 'cx'. And maybe 'rx', 'ry', 'rz' if they are broken down?
-        # A clearer way with Aer is to add to all 1-qubit and 2-qubit gates or specific names.
-        # User said "cx and u gates". We'll interpret 'u' as the generic single qubit unitary.
         
         error_1q = depolarizing_error(error_rate, 1)
         error_2q = depolarizing_error(error_rate, 2)
         
-        noise_model.add_all_qubit_quantum_error(error_1q, ['u', 'u1', 'u2', 'u3', 'rz', 'sx', 'x', 'h']) # Broad coverage to be safe or just u
-        # Strictly "cx and u gates":
-        # noise_model.add_all_qubit_quantum_error(error_1q, ['u'])
-        # noise_model.add_all_qubit_quantum_error(error_2q, ['cx'])
-        # However, transpile typically uses specific basis gates.
-        # We'll stick to adding to 'u' and 'cx' and hope transpilation uses them (Aer usually supports 'u').
-        # Better: add to standard basis set [id, rz, sx, x, cx] used by IBM backends?
-        # Use instructions: "Apply this error to all cx and u gates."
+        # Apply error to standard gates
         noise_model.add_all_qubit_quantum_error(error_1q, ['u']) 
         noise_model.add_all_qubit_quantum_error(error_2q, ['cx'])
 
         backend = AerSimulator(noise_model=noise_model)
-        
-        # SamplerV2
         sampler = BackendSamplerV2(backend=backend)
         
-        # Transpile 
-        # We need to transpile to a basis that matches our noise model? 
-        # If we added noise to 'u' and 'cx', we should transpile to ['u', 'cx'].
         transpiled_qc = transpile(qc, backend, basis_gates=['u', 'cx'], optimization_level=1)
         
         job = sampler.run([transpiled_qc], shots=4096)
         result = job.result()
         
-        # Process results
-        # SamplerV2 returns BitArray in data.c (assuming 'c' register)
-        # We need to check register name. qc constructed with QuantumCircuit(n, n) uses 'c' ?? 
-        # Wait, qiskit default cr name is 'c' only if not specified? 
-        # Actually in 1.0, it might be 'c0' or similar.
-        # Safer: Inspect the data object keys.
-        data_keys = result[0].data.keys() # e.g. ['c']
-        # For now assume 'c' or the first one found.
+        # Handle result data structure
+        data_keys = result[0].data.keys() 
         c_reg_name = list(data_keys)[0]
         counts = result[0].data[c_reg_name].get_counts()
         
-        # Success probability (target '101')
         target_count = counts.get(target, 0)
         prob = target_count / 4096
         success_probs.append(prob)
@@ -177,7 +137,7 @@ def run_experiment_2_topology():
     fidelities = {}
     shots = 4096
     
-    # Ideal simulation for reference
+    # Ideal simulation
     ideal_backend = AerSimulator()
     ideal_sampler = BackendSamplerV2(backend=ideal_backend)
     ideal_qc = transpile(qc, ideal_backend)
@@ -208,7 +168,6 @@ def run_experiment_2_topology():
             best_fidelity = fid
             best_backend = name
             
-    # Save Best Topology to public/results folder
     with open('public/results/best_topology.txt', 'w') as f:
         f.write(f"Best Performing Topology: {best_backend}\n")
         f.write(f"Fidelity: {best_fidelity:.6f}\n")

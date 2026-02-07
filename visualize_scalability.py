@@ -60,7 +60,6 @@ def plot_scalability_analysis(data, output_file='public/results/scalability.png'
     ax3.bar(n_qubits, cnot_counts, alpha=0.3, color=color3, width=0.3, label='CNOTs')
     ax3.tick_params(axis='y', labelcolor=color3)
 
-    # Title and legend
     ax1.set_title("Grover's Algorithm Scalability Analysis\nDepth vs. Width Trade-off",
                   fontsize=14, fontweight='bold', pad=20)
 
@@ -72,7 +71,6 @@ def plot_scalability_analysis(data, output_file='public/results/scalability.png'
     plt.tight_layout()
     plt.savefig(output_file, dpi=300, bbox_inches='tight')
     print(f"Scalability chart saved to: {output_file}")
-    plt.show()
 
 
 def main():

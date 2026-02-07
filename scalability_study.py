@@ -51,18 +51,11 @@ def run_scalability_study():
     shots = 4096
 
     for n in [3, 4, 5, 6]:
-        print(f"\n{'='*60}")
         print(f"Analyzing {n}-qubit system (N={2**n} states)")
-        print(f"{'='*60}")
-
-        # Create target: all 1s for simplicity
+        
         target = '1' * n
-
         qc, k_optimal = create_grover_circuit_nqubit(n, target)
-        print(f"Target state: |{target}⟩")
-        print(f"Optimal iterations: {k_optimal}")
-        print(f"Original circuit depth: {qc.depth()}")
-
+        
         # Transpile for FakeBrisbane
         pm = generate_preset_pass_manager(optimization_level=3, backend=fake_backend)
         transpiled_qc = pm.run(qc)
@@ -70,9 +63,6 @@ def run_scalability_study():
         depth = transpiled_qc.depth()
         ops = transpiled_qc.count_ops()
         cnot_count = ops.get('ecr', 0) + ops.get('cx', 0) + ops.get('cnot', 0)
-
-        print(f"Transpiled depth: {depth}")
-        print(f"CNOT/ECR count: {cnot_count}")
 
         # Run ideal simulation
         pm_ideal = generate_preset_pass_manager(optimization_level=1, backend=simulator)
@@ -84,12 +74,12 @@ def run_scalability_study():
         noisy_counts = noisy_sim.run(transpiled_qc, shots=shots).result().get_counts()
         noisy_success = noisy_counts.get(target, 0) / shots
 
-        # Calculate fidelity
         fidelity = calculate_hellinger_fidelity(ideal_counts, noisy_counts, shots)
 
-        print(f"Success probability (Ideal): {ideal_success*100:.2f}%")
-        print(f"Success probability (Noisy): {noisy_success*100:.2f}%")
-        print(f"Hellinger Fidelity: {fidelity:.4f}")
+        print(f"  Target: |{target}⟩, Iterations: {k_optimal}")
+        print(f"  Depth: {depth}, CNOTs: {cnot_count}")
+        print(f"  Success (Ideal/Noisy): {ideal_success*100:.1f}% / {noisy_success*100:.1f}%")
+        print(f"  Fidelity: {fidelity:.4f}\n")
 
         results.append({
             'n_qubits': n,
@@ -114,10 +104,7 @@ def run_scalability_study():
         writer.writeheader()
         writer.writerows(results)
 
-    print(f"\n{'='*60}")
     print(f"Results saved to: {csv_file}")
-    print(f"{'='*60}")
-
     return results, csv_file
 
 

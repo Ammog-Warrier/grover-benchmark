@@ -422,11 +422,7 @@ If you use this benchmarking suite in your research, please cite:
 
 ---
 
-## License
 
-MIT License - See LICENSE file for details
-
----
 
 ## Contributing
  
